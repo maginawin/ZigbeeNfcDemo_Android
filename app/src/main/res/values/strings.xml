@@ -6,4 +6,20 @@
     <string name="nfc_not_support_msg">Sorry, your device does not support NFC.</string>
     <string name="nfc_disabled_msg">Please enable the NFC first.</string>
     <string name="ok">OK</string>
+    <string name="scan_a_device">Scan a device</string>
+    <string name="create_a_device">Create a device</string>
+    <string name="zigbee_dim">Zigbee DIM</string>
+    <string name="zigbee_cct">Zigbee CCT</string>
+    <string name="cancel">Cancel</string>
+    <string name="product_id">Product ID</string>
+    <string name="target_current">Target Current</string>
+    <string name="dimming_curve">Dimming Curve</string>
+    <string name="power_on_state">Power On State</string>
+    <string name="on_off_tran_time">On Off Transition Time</string>
+    <string name="enable_pairing">Enable Pairing</string>
+    <string name="min_current_comp">Minimum Current Compensation</string>
+    <string name="power_on_level">Power On Level</string>
+    <string name="read">Read</string>
+    <string name="write">Write</string>
+    <string name="edit_value">Edit Value</string>
 </resources>
