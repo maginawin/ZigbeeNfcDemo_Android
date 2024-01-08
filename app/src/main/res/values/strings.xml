@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">ZigbeeNfcDemo</string>
+    <string name="app_details">This is a demo App of how to set the attributes of the Zigbee DIM/CCT devices.</string>
+    <string name="lets_go">Let\'s Go</string>
+    <string name="note">Note</string>
+    <string name="nfc_not_support_msg">Sorry, your device does not support NFC.</string>
+    <string name="nfc_disabled_msg">Please enable the NFC first.</string>
+    <string name="ok">OK</string>
 </resources>
