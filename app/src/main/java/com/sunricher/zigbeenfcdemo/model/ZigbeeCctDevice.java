@@ -41,8 +41,7 @@ public class ZigbeeCctDevice extends ZigbeeDimDevice {
     @Override
     public List<AttributeItem> getAttributeItems() {
         List<AttributeItem> items = super.getAttributeItems();
-        items.remove(0);
-        items.add(new AttributeItem("Product ID", "0x" + HexUtil.intToHexString(PRODUCT_ID), PRODUCT_ID, NfcCommand.ZigbeeNfcPage.PRODUCT_ID));
+        items.set(0,new AttributeItem("Product ID", "0x" + HexUtil.intToHexString(PRODUCT_ID), PRODUCT_ID, NfcCommand.ZigbeeNfcPage.PRODUCT_ID));
         items.add(new AttributeItem("Max CCT", maxCct, NfcCommand.ZigbeeNfcPage.MAX_CCT_VALUE));
         items.add(new AttributeItem("Min CCT", minCct, NfcCommand.ZigbeeNfcPage.MIN_CCT_VALUE));
         return items;

@@ -43,13 +43,16 @@ public class NfcActivity extends AppCompatActivity {
     enum NfcStatus {
         none,
         reading,
-        writing
+        writing,
+        scanning,
     }
 
     enum NfcResult {
         ok,  // The nfc operation is successful.
         nfcError, // The nfc operation is failed.
-        deviceTypeError // The device type is wrong.
+        deviceTypeError, // The device type is wrong.
+        scanToZigbeeDim,
+        scanToZigbeeCct,
     }
 
     private ViewStatus viewStatus = ViewStatus.initial;
@@ -57,8 +60,8 @@ public class NfcActivity extends AppCompatActivity {
 
     private NfcAdapter nfcAdapter;
     private PendingIntent pendingIntent;
-    private ZigbeeDimDevice zigbeeDimDevice;
-    private ZigbeeCctDevice zigbeeCctDevice;
+    private ZigbeeDimDevice zigbeeDimDevice = new ZigbeeDimDevice();;
+    private ZigbeeCctDevice zigbeeCctDevice = new ZigbeeCctDevice();
 
     private Button scanBtn;
     private Button createBtn;
@@ -67,6 +70,7 @@ public class NfcActivity extends AppCompatActivity {
     private DeviceAdapter deviceAdapter;
 
     private AttributeItem selectedItem;
+    private List<AttributeItem> scanningItems = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,6 +133,11 @@ public class NfcActivity extends AppCompatActivity {
             case writing: {
                 NfcResult writingResult = handleWritingIntent(intent);
                 showNfcResult(writingResult);
+                break;
+            }
+            case scanning: {
+                NfcResult scanningResult = handleScanningIntent(intent);
+                showNfcResult(scanningResult);
                 break;
             }
         }
@@ -231,6 +240,51 @@ public class NfcActivity extends AppCompatActivity {
         return NfcResult.ok;
     }
 
+    private NfcResult handleScanningIntent(Intent intent) {
+        Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        if (tag == null) {
+            return NfcResult.nfcError;
+        }
+        NfcA nfcA = NfcA.get(tag);
+        if (nfcA == null) {
+            return NfcResult.nfcError;
+        }
+        try {
+            nfcA.connect();
+            // Before send data to the NFC, you have to send SECRET_KEY to the device.
+            nfcA.transceive(NfcCommand.SECRET_KEY);
+            // Read the product ID of the device.
+            byte[] productIdResult = nfcA.transceive(NfcCommand.readSingleAttribute(NfcCommand.ZigbeeNfcPage.PRODUCT_ID));
+            int productId = HexUtil.bytesToInt(productIdResult);
+            Log.i(LOG_TAG, "productId " + productId);
+
+            // Read the attributes of the device.
+            List<AttributeItem> items = new ArrayList<>();
+            NfcResult tempResult;
+            if (productId == zigbeeDimDevice.getProductId()) {
+                items = zigbeeDimDevice.getAttributeItems();
+                tempResult = NfcResult.scanToZigbeeDim;
+            } else if (productId == zigbeeCctDevice.getProductId()) {
+                items = zigbeeCctDevice.getAttributeItems();
+                tempResult = NfcResult.scanToZigbeeCct;
+            } else {
+                return NfcResult.deviceTypeError;
+            }
+            scanningItems = items;
+
+            // The first item is the product ID, skip it.
+            for (int i = 1; i < items.size(); i++) {
+                AttributeItem item = items.get(i);
+                byte[] itemValueBytes = nfcA.transceive(NfcCommand.readSingleAttribute(item.getNfcPage()));
+                item.setNfcValue(itemValueBytes);
+            }
+            return tempResult;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return NfcResult.nfcError;
+        }
+    }
+
     private void showNfcResult(NfcResult result) {
         switch (result) {
             case ok: {
@@ -245,12 +299,27 @@ public class NfcActivity extends AppCompatActivity {
                 showResultDialog("Device Type Error", "This device has a wrong device type, the product ID is not valid.");
                 break;
             }
+            case scanToZigbeeDim: {
+                showResultDialog("Scan to Zigbee DIM", "");
+                deviceAdapter.setItems(scanningItems);
+                viewStatus = ViewStatus.zigbeeDim;
+                updateViewStatus();
+                break;
+            }
+            case scanToZigbeeCct: {
+                showResultDialog("Scan to Zigbee CCT", "");
+                deviceAdapter.setItems(scanningItems);
+                viewStatus = ViewStatus.zigbeeCct;
+                updateViewStatus();
+                break;
+            }
         }
         nfcStatus = NfcStatus.none;
     }
 
     private void handleScan() {
-        // TODO: handleScan a device.
+        nfcStatus = NfcStatus.scanning;
+        showReadingOrWritingDialog("Scanning", "Scanning the Zigbee dim or cct device.");
     }
 
     private void handleCreate() {
